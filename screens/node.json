@@ -1,0 +1,91 @@
+{
+    "name": "Screen Configuration",
+    "xcustom_ui": "config.html",
+    "optional": [
+        ".*.js$",
+        ".*.html$",
+        "^example-.*",
+        "^doc-.*",
+        "package-header.jpg",
+        ".*.md$"
+    ],
+    "options": [{
+        "title": "Content Area Width (pixel)",
+        "hint": "Height of your content. If it doesn't fix, it's resized to this width.",
+        "ui_width": 4,
+        "name": "width",
+        "type": "float",
+        "default": 1920
+    }, {
+        "title": "Content Area Height (pixel)",
+        "hint": "Height of your content. If it doesn't fix, it's resized to this height.",
+        "ui_width": 4,
+        "name": "height",
+        "type": "float",
+        "default": 1080
+    }, {
+        "title": "Aspect adjust content",
+        "hint": "Usually your playlist content is resized into the content area size, ignoring aspect ratio. Enable to use aspect ratio preserving scaling",
+        "ui_width": 4,
+        "name": "adjust",
+        "type": "boolean",
+        "default": false
+    },
+    
+    {
+        "title": "Screen Configuration",
+        "type": "section"
+    }, {
+        "title": "Screens",
+        "name": "screens",
+        "type": "list",
+        "itemname": "Screen",
+        "items": [{
+            "title": "Device",
+            "ui_width": 6,
+            "name": "serial",
+            "type": "device"
+        }, {
+            "title": "Rotation",
+            "ui_width": 3,
+            "name": "rotation",
+            "type": "select",
+            "options": [
+                [0, "None (default)"]
+            ],
+            "default": 0
+        }, {
+            "title": "Δ Latency (ms)",
+            "ui_width": 3,
+            "name": "delta_t",
+            "type": "integer",
+            "default": 0
+        },
+        
+        {
+            "title": "X",
+            "ui_width": 3,
+            "name": "x",
+            "type": "float",
+            "default": 0
+        }, {
+            "title": "Y",
+            "ui_width": 3,
+            "name": "y",
+            "type": "float",
+            "default": 0
+        }, {
+            "title": "Width",
+            "ui_width": 3,
+            "name": "width",
+            "type": "integer",
+            "default": 1920
+        }, {
+            "title": "Height",
+            "ui_width": 3,
+            "name": "height",
+            "type": "integer",
+            "default": 1080 
+        }]
+    }]
+}
