@@ -159,7 +159,7 @@ local function Playlist()
         end
         item.t_prepare = item.t_start - PREPARE_TIME
         item.t_end = item.t_start + item:slot_time()
-        pp(item)
+        -- pp(item)
     end
 
     local function tick(now)
