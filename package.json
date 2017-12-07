@@ -1,7 +1,7 @@
 {
     "name": "Flexible Grid Video Wall",
     "author": "Florian Wesch <fw@info-beamer.com>",
-    "desc": "Plays videos and images on a grid of screens",
+    "desc": "Plays videos and images on precisely arranged screens",
     "repository": "https://github.com/info-beamer/package-flex-wall",
     "version": "beta1"
 }
