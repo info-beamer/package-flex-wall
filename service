@@ -1,0 +1,29 @@
+#!/usr/bin/python2.7
+import time
+import pytz
+from datetime import datetime, timedelta
+from hosted import CONFIG, NODE
+
+CONFIG.restart_on_update()
+
+tz = pytz.timezone(CONFIG['timezone'])
+
+def parse_time(val):
+    hour, minute = [int(v) for v in val.split(':')]
+    return timedelta(hours=hour, minutes=minute)
+
+day_start = parse_time(CONFIG['day_start'])
+night_start = parse_time(CONFIG['night_start'])
+
+while time.time() < 100000:
+    time.sleep(1)
+
+while 1:
+    now = pytz.utc.localize(datetime.utcnow(), is_dst=None).astimezone(tz)
+
+    now = now - now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    is_day = now >= day_start and now < night_start
+    NODE["/is_day"]("true" if is_day else "false")
+
+    time.sleep(5)

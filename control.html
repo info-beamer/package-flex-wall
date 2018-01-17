@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <button id='auto' class='btn btn-default'>Automatic Mode</button>
+    <button id='day' class='btn btn-default'>Force Day Mode</button>
+    <button id='night' class='btn btn-default'>Force Night Mode</button>
+
+    <script src="hosted.js"></script>
+
+    <script>
+      ib.setDefaultStyle();
+
+      document.getElementById('auto').addEventListener('click', function(evt) {
+        ib.sendCommand("set_mode", "auto");
+      });
+      document.getElementById('day').addEventListener('click', function(evt) {
+        ib.sendCommand("set_mode", "day");
+      });
+      document.getElementById('night').addEventListener('click', function(evt) {
+        ib.sendCommand("set_mode", "night");
+      });
+    </script>
+  </body>
+</html>
+

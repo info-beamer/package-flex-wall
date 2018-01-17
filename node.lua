@@ -280,19 +280,79 @@ util.file_watch("screens/config.json", function(raw)
     end
 end)
 
+local function PlaylistSelect(playlist)
+    local day = {}
+    local night = {}
+
+    local mode = "auto" -- display mode: auto, day or night
+    local is_day = true -- what does the service say?
+
+    -- What's currently on screen
+    local current_list
+
+    local function decide_playlist()
+        local function set_if_changed(items, new_list)
+            if new_list ~= current_list then
+                print(string.format("switching from %s to %s", current_list or "<nil>", new_list))
+                playlist.set(items)
+                current_list = new_list
+            end
+        end
+
+        if mode == "day" or (mode == "auto" and is_day) then
+            set_if_changed(day, "day")
+        else
+            set_if_changed(night, "night")
+        end
+    end
+
+    util.data_mapper{
+        is_day = function(value)
+            is_day = value == "true"
+            decide_playlist()
+        end,
+        set_mode = function(new_mode)
+            mode = new_mode
+            decide_playlist()
+        end
+    }
+
+    local function update_lists(new_day, new_night)
+        day = new_day
+        night = new_night
+        current_list = nil -- force restart
+        decide_playlist()
+    end
+
+    return {
+        update_lists = update_lists;
+    }
+end
+
+local selector = PlaylistSelect(playlist)
+
 util.file_watch("config.json", function(raw)
     local config = json.decode(raw)
-    local items = {}
-    for idx = 1, #config.playlist do
-        local item = config.playlist[idx]
-        items[#items+1] = {
+
+    local function item_from_config(item)
+        return {
             file = resource.open_file(item.file.asset_name),
             type = item.file.type,
             duration = item.duration,
         }
     end
-    playlist.set(prepare_playlist(items))
-    node.gc()
+
+    local day = {}
+    for idx = 1, #config.playlist do
+        day[#day+1] = item_from_config(config.playlist[idx])
+    end
+
+    local night = {}
+    for idx = 1, #config.playlist_night do
+        night[#night+1] = item_from_config(config.playlist_night[idx])
+    end
+
+    selector.update_lists(prepare_playlist(day), prepare_playlist(night))
 end)
 
 function node.render()
