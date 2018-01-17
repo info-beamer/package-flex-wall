@@ -1,7 +1,7 @@
 {
-    "name": "Flexible Grid Video Wall",
+    "name": "Flexible Video Wall (Day/Night)",
     "author": "Florian Wesch <fw@info-beamer.com>",
-    "desc": "Plays videos and images on precisely arranged screens",
-    "repository": "https://github.com/info-beamer/package-flex-wall",
-    "version": "beta1"
+    "desc": "Plays videos and images on precisely arranged screens. Supports day/night playlists.",
+    "repository": "https://github.com/info-beamer/package-flex-wall/tree/day-night",
+    "version": "beta2"
 }
