@@ -14,7 +14,7 @@
             "ui_width": 5,
             "name": "file",
             "type": "resource",
-            "valid": ["image", "video"],
+            "valid": ["image", "video", "child"],
             "default": "empty.png"
         }, {
             "title": "Play time",

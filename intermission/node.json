@@ -1,0 +1,31 @@
+{
+    "name": "Plugin: Intermission Pictures",
+    "options": [{
+        "title": "Pictures per activation",
+        "ui_width": 4,
+        "name": "num_pictures",
+        "type": "select",
+        "options": [
+            [1, "Show single picture"],
+            [2, "Show 2 pictures"],
+            [3, "Show 3 pictures"],
+            [4, "Show 4 pictures"],
+            [5, "Show 5 pictures"],
+            [6, "Show 6 pictures"]
+        ],
+        "default": 1
+    }, {
+        "title": "Pictures",
+        "name": "pictures",
+        "type": "list",
+        "itemname": "Picture",
+        "items": [{
+            "title": "Asset",
+            "ui_width": 6,
+            "name": "file",
+            "type": "resource",
+            "valid": ["image"],
+            "default": "empty.png"
+        }]
+    }]
+}

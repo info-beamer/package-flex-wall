@@ -16,6 +16,7 @@ local VIDEO_PRELOAD_TIME = .5 -- seconds
 
 local json = require "json"
 local matrix = require "matrix2d"
+local loader = require "loader"
 local font = resource.load_font "silkscreen.ttf"
 local serial = sys.get_env "SERIAL"
 local min, max = math.min, math.max
@@ -144,6 +145,11 @@ local Video = {
     end;
 }
 
+local child_loader = loader.setup "child.lua"
+local function Child(self, key)
+    return child_loader.modules[self.asset_name][key]
+end
+
 local function Playlist()
     local items = {}
     local total_duration = 0
@@ -227,6 +233,8 @@ local function Playlist()
                 setmetatable(item, {__index = Image})
             elseif item.type == "video" then
                 setmetatable(item, {__index = Video})
+            elseif item.type == "child" then
+                setmetatable(item, {__index = Child})
             else
                 return error("unsupported type" .. item.type)
             end
@@ -252,10 +260,13 @@ local function prepare_playlist(playlist)
     if #playlist >= 2 then
         return playlist
     elseif #playlist == 1 then
-        -- only a single item? Copy it
+        -- only a single item? Copy it.
+        -- this is requires as each item in a playlist
+        -- is stateful (like "it's playing at the moment")
         local item = playlist[1]
         playlist[#playlist+1] = {
             file = item.file,
+            asset_name = item.asset_name,
             type = item.type,
             duration = item.duration,
         }
@@ -263,39 +274,49 @@ local function prepare_playlist(playlist)
     return playlist
 end
 
-util.file_watch("screens/config.json", function(raw)
-    local config = json.decode(raw)
-    adjust = config.adjust
-    delta_t = 0
-    assigned = false
+local function monitor_configuration()
+    util.file_watch("screens/config.json", function(raw)
+        local config = json.decode(raw)
+        adjust = config.adjust
+        delta_t = 0
+        assigned = false
 
-    for idx = 1, #config.screens do
-        local screen_config = config.screens[idx]
-        if screen_config.serial == serial then
-            screen.update(screen_config, config.width, config.height)
-            delta_t = screen_config.delta_t
-            assigned = true
-            return
+        for idx = 1, #config.screens do
+            local screen_config = config.screens[idx]
+            if screen_config.serial == serial then
+                screen.update(screen_config, config.width, config.height)
+                delta_t = screen_config.delta_t
+                assigned = true
+                return
+            end
         end
-    end
-end)
+    end)
 
-util.file_watch("config.json", function(raw)
-    local config = json.decode(raw)
-    local items = {}
-    for idx = 1, #config.playlist do
-        local item = config.playlist[idx]
-        items[#items+1] = {
-            file = resource.open_file(item.file.asset_name),
-            type = item.file.type,
-            duration = item.duration,
-        }
-    end
-    playlist.set(prepare_playlist(items))
-    node.gc()
-end)
+    util.file_watch("config.json", function(raw)
+        local config = json.decode(raw)
+        local items = {}
+        for idx = 1, #config.playlist do
+            local item = config.playlist[idx]
 
-function node.render()
+            -- preopen file for images/videos
+            local file
+            if item.file.type ~= "child" then
+                file = resource.open_file(item.file.asset_name)
+            end
+
+            items[#items+1] = {
+                file = file,
+                asset_name = item.file.asset_name,
+                type = item.file.type,
+                duration = item.duration,
+            }
+        end
+        playlist.set(prepare_playlist(items))
+        node.gc()
+    end)
+end
+
+local function video_wall_render()
     gl.clear(0,0,0,1)
 
     local now = get_walltime()
@@ -304,4 +325,9 @@ function node.render()
     else
         playlist.tick(now)
     end
+end
+
+function node.render()
+    monitor_configuration()
+    node.render = video_wall_render
 end
