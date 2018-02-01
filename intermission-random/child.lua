@@ -5,7 +5,7 @@ local max = math.max
 local M = {}
 
 local assets = {}
-local randomize_playtime = false
+local randomize_playtime = 0
 
 local function shuffle(tbl)
     local size = #tbl
@@ -20,10 +20,9 @@ function M:load_next_item()
     local item = assets[self.offset]
     self.offset = self.offset % #assets + 1
 
-    local duration = item.duration
-    if randomize_playtime then
-        duration = max(1, duration + math.random() - 0.5)
-    end
+    local duration = max(
+        1, item.duration + (math.random()-0.5) * randomize_playtime
+    )
 
     if item.type == "image" then
         self.next_player = {
@@ -37,6 +36,7 @@ function M:load_next_item()
                 file = item.file:copy(),
                 raw = true,
                 paused = true,
+                looped = true,
             },
             type = "video",
             duration = duration,

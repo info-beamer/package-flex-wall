@@ -21,10 +21,16 @@
             "default": 5
         }]
     }, {
-        "type": "boolean",
-        "title": "Slighly randomize play duration for each item",
+        "type": "select",
+        "title": "Randomize play duration for each item",
         "name": "randomize_playtime",
         "ui_width": 6,
-        "default": false
+        "options": [
+            [0, "No. Use configured duration"],
+            [1.0, "Modify by ±0.5 seconds"],
+            [2.0, "Modify by ±1.0 seconds"],
+            [3.0, "Modify by ±1.5 seconds"]
+        ],
+        "default": 0
     }]
 }
