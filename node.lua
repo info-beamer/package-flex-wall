@@ -1,6 +1,7 @@
 gl.setup(NATIVE_WIDTH, NATIVE_HEIGHT)
 
 util.noglobals()
+math.randomseed(os.time())
 
 -- We need to access files in screens/
 node.make_nested()

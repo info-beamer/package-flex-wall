@@ -1,7 +1,5 @@
 local api, CHILDS, CONTENTS = ...
 
-math.randomseed(os.time())
-
 local max = math.max
 
 local M = {}
