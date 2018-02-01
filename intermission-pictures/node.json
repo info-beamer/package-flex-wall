@@ -11,7 +11,11 @@
             [3, "Show 3 pictures"],
             [4, "Show 4 pictures"],
             [5, "Show 5 pictures"],
-            [6, "Show 6 pictures"]
+            [6, "Show 6 pictures"],
+            [10, "Show 10 pictures"],
+            [15, "Show 15 pictures"],
+            [20, "Show 20 pictures"],
+            [30, "Show 30 pictures"]
         ],
         "default": 1
     }, {
