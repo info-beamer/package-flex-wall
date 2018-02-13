@@ -10,11 +10,6 @@ node.make_nested()
 -- they are displayed.
 local PREPARE_TIME = 1 -- seconds
 
--- must be enough time to load a video and have it
--- ready in the paused state. Normally 500ms should
--- be enough.
-local VIDEO_PRELOAD_TIME = .5 -- seconds
-
 local json = require "json"
 local matrix = require "matrix2d"
 local loader = require "loader"
@@ -123,7 +118,7 @@ local Video = {
 .--------------------------------------------.
   WARNING:
   lost video frame. video is most likely out
-  of sync. increase VIDEO_PRELOAD_TIME (on all
+  of sync. increase PREPARE_TIME (on all
   devices)
 '--------------------------------------------'
 ]]
