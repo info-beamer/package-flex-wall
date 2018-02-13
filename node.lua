@@ -104,23 +104,16 @@ local Image = {
 
 local Video = {
     slot_time = function(self)
-        return VIDEO_PRELOAD_TIME + max(0.5, self.duration)
+        return max(0.5, self.duration)
     end;
     prepare = function(self)
+        self.obj = resource.load_video{
+            file = self.file:copy();
+            raw = true,
+            paused = true;
+        }
     end;
     tick = function(self, now)
-        if not self.obj then
-            self.obj = resource.load_video{
-                file = self.file:copy();
-                raw = true,
-                paused = true;
-            }
-        end
-
-        if now < self.t_start + VIDEO_PRELOAD_TIME then
-            return
-        end
-
         self.obj:start()
         local state, w, h = self.obj:state()
 
