@@ -53,8 +53,8 @@ function M:prepare()
 
     self.offset = 1
     self.next_switch = self.t_start
-    self.player = nil
 
+    self.player = nil
     self:load_next_item()
 end
 
@@ -81,8 +81,12 @@ end
 function M:stop()
     if self.next_player then
         self.next_player.obj:dispose()
+        self.next_player = nil
     end
-    self.player.obj:dispose()
+    if self.player then
+        self.player.obj:dispose()
+        self.player = nil
+    end
 end
 
 function M.updated_config_json(config)

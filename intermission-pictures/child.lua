@@ -34,6 +34,7 @@ function M:prepare()
     self.per_image_time = self.duration / num_pictures
     self.next_switch = self.t_start
 
+    self.image = nil
     self:load_next_image()
 end
 
@@ -50,8 +51,12 @@ function M:stop()
     print "child stop"
     if self.next_image then
         self.next_image:dispose()
+        self.next_image = nil
     end
-    self.image:dispose()
+    if self.image then
+        self.image:dispose()
+        self.image = nil
+    end
 end
 
 function M.updated_config_json(config)
