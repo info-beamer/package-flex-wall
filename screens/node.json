@@ -87,5 +87,37 @@
             "type": "integer",
             "default": 1080 
         }]
-    }]
+    }],
+    "presets": {
+        "2x2on16by9": {
+            "desc": "Example 2x2 video wall using 16:9 screens",
+            "config": {
+                "width": 1920,
+                "height": 1080,
+                "adjust": true,
+                "screens": [{
+                    "x": 0, "y": 0, "width": 960, "height": 540
+                }, {
+                    "x": 960, "y": 0, "width": 960, "height": 540
+                }, {
+                    "x": 0, "y": 540, "width": 960, "height": 540
+                }, {
+                    "x": 960, "y": 540, "width": 960, "height": 540
+                }]
+            }
+        },
+        "mirror": {
+            "desc": "Show the same content on two screens",
+            "config": {
+                "width": 1920,
+                "height": 1080,
+                "adjust": true,
+                "screens": [{
+                    "x": 0, "y": 0, "width": 1920, "height": 1080
+                }, {
+                    "x": 0, "y": 0, "width": 1920, "height": 1080
+                }]
+            }
+        }
+    }
 }
