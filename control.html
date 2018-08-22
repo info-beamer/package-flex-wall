@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <button id='restart' class='btn btn-default'>Restart Playback</button>
+    <script src="hosted.js"></script>
+    <script>
+      ib.setDefaultStyle();
+      document.getElementById('restart').addEventListener('click', function(evt) {
+        ib.sendCommand('restart', '');
+      });
+    </script>
+  </body>
+</html>

@@ -1,5 +1,6 @@
 {
     "name": "Playlist Configuration",
+    "control_ui": "control.html",
     "options": [
     {
         "title": "What to display",
@@ -11,18 +12,53 @@
         "itemname": "Item",
         "items": [{
             "title": "Asset",
-            "ui_width": 5,
+            "ui_width": 4,
             "name": "file",
             "type": "resource",
             "valid": ["image", "video"],
             "default": "empty.png"
         }, {
             "title": "Play time",
-            "ui_width": 3,
+            "ui_width": 2,
             "name": "duration",
             "type": "duration",
             "hint": "How long should this item be displayed on screen. For videos, use their duration",
             "default": 5
+        }, {
+            "title": "Start (incl)",
+            "ui_width": 3,
+            "name": "starts",
+            "type": "date",
+            "allow_empty": true,
+            "hint": "When should the content first play? Leave empty to start scheduling this content immediately.",
+            "default": ""
+        }, {
+            "title": "End (incl)",
+            "ui_width": 3,
+            "name": "ends",
+            "type": "date",
+            "allow_empty": true,
+            "hint": "When should the content first play? Leave empty to play this content forever.",
+            "default": ""
         }]
+    }, 
+    
+    {
+        "title": "Other settings",
+        "type": "section"
+    }, {
+        "title": "Time Zone",
+        "ui_width": 3,
+        "name": "timezone",
+        "type": "select",
+        "hint": "Select the timezone used for scheduling",
+        "options": [
+            ["UTC", "UTC"],
+            ["Europe/Berlin", "Europa / Berlin"],
+            ["Europe/London", "Europe/London"],
+            ["Europe/Paris", "Europe/Paris"],
+            ["US/Central", "US/Central"],
+            ["US/Eastern", "US/Eastern"]
+        ]
     }]
 }

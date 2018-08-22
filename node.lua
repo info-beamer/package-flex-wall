@@ -1,6 +1,6 @@
 gl.setup(NATIVE_WIDTH, NATIVE_HEIGHT)
 
-util.noglobals()
+util.no_globals()
 
 -- We need to access files in screens/
 node.make_nested()
@@ -31,6 +31,20 @@ end
 
 local function get_walltime()
     return os.time() + max(-1000, min(1000, delta_t))/1000
+end
+
+local today = {year=0, month=0, day=0}
+
+local function date_within(starts, ends)
+    local function expand(date)
+        return date.year * 600 + date.month * 40 + date.day
+    end
+
+    local n = expand(today)
+    local s = starts == json.null and 0 or expand(starts)
+    local e = ends == json.null and 10000000 or expand(ends)
+
+    return n >= s and n <= e
 end
 
 local function Screen()
@@ -219,7 +233,32 @@ local function Playlist()
         end
     end
 
-    local function set(new_items)
+    local function set(playlist)
+        print "restarting playback for playlist"
+        stop_all()
+
+        local new_items = {}
+        for idx = 1, #playlist do
+            local item = playlist[idx]
+            local is_scheduled = date_within(item.starts, item.ends)
+            if is_scheduled then
+                new_items[#new_items+1] = item
+            end
+        end
+
+        if #new_items == 1 then
+            -- only a single item? Copy it, so we can load/unload
+            -- two of them independantly
+            local item = new_items[1]
+            new_items[#new_items+1] = {
+                file = item.file,
+                type = item.type,
+                duration = item.duration,
+                starts = item.starts,
+                ends = item.ends,
+            }
+        end
+
         total_duration = 0
         for idx = 1, #new_items do
             local item = new_items[idx]
@@ -234,8 +273,7 @@ local function Playlist()
             item.state = "new"
             total_duration = total_duration + item:slot_time()
         end
-
-        stop_all()
+        print(string.format("%d items are active. total duration is %.3f", #new_items, total_duration))
 
         items = new_items
     end
@@ -248,23 +286,7 @@ end
 
 local playlist = Playlist()
 
-local function prepare_playlist(playlist)
-    if #playlist >= 2 then
-        return playlist
-    elseif #playlist == 1 then
-        -- only a single item? Copy it
-        local item = playlist[1]
-        playlist[#playlist+1] = {
-            file = item.file,
-            type = item.type,
-            duration = item.duration,
-        }
-    end
-    return playlist
-end
-
-util.file_watch("screens/config.json", function(raw)
-    local config = json.decode(raw)
+util.json_watch("screens/config.json", function(config)
     adjust = config.adjust
     delta_t = 0
     assigned = false
@@ -280,20 +302,39 @@ util.file_watch("screens/config.json", function(raw)
     end
 end)
 
-util.file_watch("config.json", function(raw)
-    local config = json.decode(raw)
-    local items = {}
+local current_playlist = {}
+
+util.json_watch("config.json", function(config)
+    local next_playlist = {}
     for idx = 1, #config.playlist do
         local item = config.playlist[idx]
-        items[#items+1] = {
+        next_playlist[#next_playlist+1] = {
             file = resource.open_file(item.file.asset_name),
             type = item.file.type,
             duration = item.duration,
+            starts = item.starts,
+            ends = item.ends,
         }
     end
-    playlist.set(prepare_playlist(items))
+
+    current_playlist = next_playlist
+    playlist.set(current_playlist)
     node.gc()
 end)
+
+util.data_mapper{
+    restart = function()
+        playlist.set(current_playlist)
+    end;
+    date = function(raw)
+        local date = json.decode(raw)
+        if date.day ~= today.day then
+            print "day changed"
+            today = date
+            playlist.set(current_playlist)
+        end
+    end;
+}
 
 function node.render()
     gl.clear(0,0,0,1)

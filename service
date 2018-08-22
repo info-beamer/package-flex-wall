@@ -1,0 +1,18 @@
+#!/usr/bin/python2.7
+import time, pytz
+from datetime import datetime
+from hosted import config, node
+
+config.restart_on_update()
+
+tz = pytz.timezone(config.timezone)
+
+while 1:
+    now = datetime.now(pytz.utc).astimezone(tz)
+    node["/date"](dict(
+        year = now.year,
+        month = now.month,
+        day = now.day,
+    ))
+    time.sleep(1)
+
