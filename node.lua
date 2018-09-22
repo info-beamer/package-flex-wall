@@ -5,14 +5,9 @@ util.noglobals()
 -- We need to access files in screens/
 node.make_nested()
 
--- Start preloading images this many second before
+-- Start preloading images/videos this many second before
 -- they are displayed.
 local PREPARE_TIME = 1 -- seconds
-
--- must be enough time to load a video and have it
--- ready in the paused state. Normally 500ms should
--- be enough.
-local VIDEO_PRELOAD_TIME = .5 -- seconds
 
 local json = require "json"
 local matrix = require "matrix2d"
@@ -102,23 +97,16 @@ local Image = {
 
 local Video = {
     slot_time = function(self)
-        return VIDEO_PRELOAD_TIME + max(0.5, self.duration)
+        return max(0.5, self.duration)
     end;
     prepare = function(self)
+        self.obj = resource.load_video{
+            file = self.file:copy();
+            raw = true,
+            paused = true;
+        }
     end;
     tick = function(self, now)
-        if not self.obj then
-            self.obj = resource.load_video{
-                file = self.file:copy();
-                raw = true,
-                paused = true;
-            }
-        end
-
-        if now < self.t_start + VIDEO_PRELOAD_TIME then
-            return
-        end
-
         self.obj:start()
         local state, w, h = self.obj:state()
 
