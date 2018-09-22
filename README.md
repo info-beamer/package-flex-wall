@@ -69,6 +69,22 @@ devices will go black for a short moment until they are all
 back in sync. Therefore it is recommended to make all
 changes to a playlist and save only once.
 
+Splitting source videos into smaller chunks
+-------------------------------------------
+
+If you have a long video it might make sense to split it up
+into smaller parts. That way the player can at each chunk
+instead of having to wait for the complete video to end.
+
+You can use ffmpeg for that:
+
+```
+ffmpeg -i source.mp4 -c copy -map 0 -segment_time 8 -f segment part%03d.mp4
+```
+
+Then import all parts into info-beamer hosted and add them
+to the playlist.
+
 Need help?
 ----------
 
