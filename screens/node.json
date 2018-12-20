@@ -30,6 +30,17 @@
         "name": "adjust",
         "type": "boolean",
         "default": false
+    }, {
+        "title": "Effect",
+        "ui_width": 4,
+        "name": "effect",
+        "type": "select",
+        "options": [
+            ["none", "No effect (default)"],
+            ["fade_02", "Fade 0.2s"],
+            ["fade_05", "Fade 0.5s"]
+        ],
+        "default": "none"
     },
     
     {
