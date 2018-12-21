@@ -23,6 +23,7 @@ local min, max = math.min, math.max
 local assigned = false
 local delta_t = 0
 local adjust = false
+local effect = "none"
 
 local function msg(str, ...)
     font:write(10, 10, str:format(...), 24, 1,1,1,.5)
@@ -45,6 +46,13 @@ local function date_within(starts, ends)
     local e = ends == json.null and 10000000 or expand(ends)
 
     return n >= s and n <= e
+end
+
+local function ramp(t_s, t_e, t_c, ramp_time)
+    if ramp_time == 0 then return 1 end
+    local delta_s = t_c - t_s
+    local delta_e = t_e - t_c
+    return math.min(1, delta_s * 1/ramp_time, delta_e * 1/ramp_time)
 end
 
 local function Screen()
@@ -76,14 +84,14 @@ local function Screen()
         return s_x1, s_y1, s_x2, s_y2
     end
 
-    local function draw_image(obj)
+    local function draw_image(obj, a)
         local x1, y1, x2, y2 = screen_coordinates(obj)
-        obj:draw(x1, y1, x2, y2)
+        obj:draw(x1, y1, x2, y2, a)
     end
 
-    local function draw_video(obj)
+    local function draw_video(obj, a)
         local x1, y1, x2, y2 = screen_coordinates(obj)
-        obj:place(x1, y1, x2, y2, 0):layer(1)
+        obj:place(x1, y1, x2, y2, 0):layer(1):alpha(a)
     end
 
     return {
@@ -95,6 +103,18 @@ end
 
 local screen = Screen()
 
+local function get_effect_vars(starts, ends, now)
+    local alpha
+    if effect == "none" then
+        alpha = 1
+    elseif effect == "fade_02" then
+        alpha = ramp(starts, ends, now, 0.2)
+    elseif effect == "fade_05" then
+        alpha = ramp(starts, ends, now, 0.5)
+    end
+    return alpha
+end
+
 local Image = {
     slot_time = function(self)
         return max(0.5, self.duration)
@@ -104,7 +124,10 @@ local Image = {
     end;
     tick = function(self, now)
         local state, w, h = self.obj:state()
-        screen.draw_image(self.obj)
+        local alpha = get_effect_vars(
+            self.t_start, self.t_end, now
+        )
+        screen.draw_image(self.obj, alpha)
     end;
     stop = function(self)
         if self.obj then
@@ -126,7 +149,7 @@ local Video = {
                 file = self.file:copy();
                 raw = true,
                 paused = true;
-            }
+            }:alpha(0)
         end
 
         if now < self.t_start + VIDEO_PRELOAD_TIME then
@@ -147,7 +170,10 @@ local Video = {
 '--------------------------------------------'
 ]]
         else
-            screen.draw_video(self.obj)
+            local alpha = get_effect_vars(
+                self.t_start + VIDEO_PRELOAD_TIME, self.t_end, now
+            )
+            screen.draw_video(self.obj, alpha)
         end
     end;
     stop = function(self)
@@ -290,6 +316,7 @@ util.json_watch("screens/config.json", function(config)
     adjust = config.adjust
     delta_t = 0
     assigned = false
+    effect = config.effect
 
     for idx = 1, #config.screens do
         local screen_config = config.screens[idx]

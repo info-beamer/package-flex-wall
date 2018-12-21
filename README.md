@@ -1,13 +1,21 @@
 [![Import](https://cdn.infobeamer.com/s/img/import.png)](https://info-beamer.com/use?url=https://github.com/info-beamer/package-flex-wall)
 
-A video/image wall with fine grained layout options
+A video/image player with fine grained layout options
 ===================================================
 
-This video walls allows you to play FullHD content
+This package allows you to play FullHD content
 across any number of screens. You can precisely
 control the screen layout of each screen and
 even adjust for latency differences between screens.
+Additionally you can also use this package to
+place content on only a single screen. Some LED
+walls require this as they show only a small area
+cropped from a FullHD output.
 
+Multiple devices running the same setup based on
+this package will be in sync, so you can also
+use this as a synced video/image player for
+fullscreen content.
 
 Setting the content area
 ------------------------
