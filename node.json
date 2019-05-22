@@ -1,7 +1,6 @@
 {
     "name": "Playlist Configuration",
-    "options": [
-    {
+    "options": [{
         "title": "What to display",
         "type": "section"
     }, {
@@ -24,5 +23,31 @@
             "hint": "How long should this item be displayed on screen. For videos, use their duration",
             "default": 5
         }]
+    },
+
+    {
+        "title": "Playback settings",
+        "type": "section"
+    }, {
+        "title": "Effect",
+        "ui_width": 4,
+        "name": "effect",
+        "type": "select",
+        "options": [
+            ["none", "No effect (default)"],
+            ["fade_02", "Fade 0.2s"],
+            ["fade_05", "Fade 0.5s"]
+        ],
+        "default": "none"
+    }, {
+        "title": "Playback mode for videos",
+        "ui_width": 4,
+        "name": "video_mode",
+        "type": "select",
+        "options": [
+            ["preload", "Preload videos"],
+            ["seamless", "Seamless videos"]
+        ],
+        "default": "preload"
     }]
 }

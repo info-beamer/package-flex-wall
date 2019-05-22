@@ -65,10 +65,22 @@ You can freely choose x, y, width and height values.
 As such you can have overlapping screens or compensate
 for your screen's bezel.
 
+The rotation value allows you rotate your display around
+the chosen screen area. In the example above, you'd
+probably only want to use 0 or 180 degree rotation.
+If you have portrait mode displays within your wall,
+you want the width and height values to reflect their
+9:16 aspect ratio.
+
+Finally the latency values allows you to move the
+sync point of your screen in relation to each other.
+That way you can adjust for minor differences in
+the hardware latency of your displays.
+
 Set a playlist
 --------------
 
-Click on the node labeled _Playlist Configuratio_ on the
+Click on the node labeled _Playlist Configuration_ on the
 left side of the configuration screen.
 
 You can add images and video assets to your playlist.
@@ -76,6 +88,22 @@ If you make changes to a playlist and click on _Save_, your
 devices will go black for a short moment until they are all
 back in sync. Therefore it is recommended to make all
 changes to a playlist and save only once.
+
+Playback settings
+-----------------
+
+You can have a fade effect between content items. Use the
+`Effect` dropdown for that.
+
+Videos cause a 0.5 second gap before they start by default.
+Within the 0.5 seconds, info-beamer preloads the video.
+
+You can also select seamless playback. In that case info-beamer
+has to load the next video while the previous one is still
+playing. This puts a lot of work on the Pi and might not
+work in all cases: The previous video might slow down or
+skip a few frames. It's recommended that you test your
+content to see if seamless mode works correct.
 
 Need help?
 ----------
@@ -88,6 +116,10 @@ once. If you need help, feel free to [contact support](https://info-beamer.com/c
 
 Release history
 ---------------
+
+### Version '0.9'
+
+Added seamless video playback
 
 ### Version 'beta1'
 

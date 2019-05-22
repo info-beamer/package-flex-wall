@@ -10,6 +10,9 @@
         ".*.md$"
     ],
     "options": [{
+        "title": "Virtual Content Area",
+        "type": "section"
+    }, {
         "title": "Content Area Width (pixel)",
         "hint": "Height of your content. If it doesn't fix, it's resized to this width.",
         "ui_width": 4,
@@ -30,19 +33,8 @@
         "name": "adjust",
         "type": "boolean",
         "default": false
-    }, {
-        "title": "Effect",
-        "ui_width": 4,
-        "name": "effect",
-        "type": "select",
-        "options": [
-            ["none", "No effect (default)"],
-            ["fade_02", "Fade 0.2s"],
-            ["fade_05", "Fade 0.5s"]
-        ],
-        "default": "none"
     },
-    
+
     {
         "title": "Screen Configuration",
         "type": "section"
@@ -62,7 +54,10 @@
             "name": "rotation",
             "type": "select",
             "options": [
-                [0, "None (default)"]
+                [0, "None (default)"],
+                [90, "90° (clockwise)"],
+                [180, "180°"],
+                [270, "270°"]
             ],
             "default": 0
         }, {
@@ -72,7 +67,7 @@
             "type": "integer",
             "default": 0
         },
-        
+
         {
             "title": "X",
             "ui_width": 3,
@@ -96,7 +91,7 @@
             "ui_width": 3,
             "name": "height",
             "type": "integer",
-            "default": 1080 
+            "default": 1080
         }]
     }],
     "presets": {

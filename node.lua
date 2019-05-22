@@ -1,6 +1,5 @@
-gl.setup(NATIVE_WIDTH, NATIVE_HEIGHT)
-
-util.noglobals()
+-- prevent accidental global variables
+util.no_globals()
 
 -- We need to access files in screens/
 node.make_nested()
@@ -8,11 +7,6 @@ node.make_nested()
 -- Start preloading images this many second before
 -- they are displayed.
 local PREPARE_TIME = 1 -- seconds
-
--- must be enough time to load a video and have it
--- ready in the paused state. Normally 500ms should
--- be enough.
-local VIDEO_PRELOAD_TIME = .5 -- seconds
 
 local json = require "json"
 local matrix = require "matrix2d"
@@ -24,6 +18,7 @@ local assigned = false
 local delta_t = 0
 local adjust = false
 local effect = "none"
+local preload_time = 0.5
 
 local function msg(str, ...)
     font:write(10, 10, str:format(...), 24, 1,1,1,.5)
@@ -41,43 +36,120 @@ local function ramp(t_s, t_e, t_c, ramp_time)
     return math.min(1, delta_s * 1/ramp_time, delta_e * 1/ramp_time)
 end
 
-local function Screen()
-    local content_w, content_h
-    local screen
-    local virtual2pixel
+local function VirtualScreen()
+    local screen, virtual2pixel, pixel2virtual
+    local virtual_w, virtual_h
+    local translate_0_x, translate_0_y
+    local scale_x, scale_y
 
-    local function update(new_screen, new_content_w, new_content_h)
+    local function update(new_screen)
         screen = new_screen
-        content_w, content_h = new_content_w, new_content_h
 
-        virtual2pixel = 
-               matrix.scale(WIDTH / content_w,
-                            HEIGHT / content_h) *
-               matrix.scale(content_w / screen.width,
-                            content_h / screen.height) *
-               matrix.trans(-screen.x, -screen.y) 
+        gl.setup(NATIVE_WIDTH, NATIVE_HEIGHT)
+        virtual_w, virtual_h = screen.res_x or NATIVE_WIDTH,
+                               screen.res_y or NATIVE_HEIGHT
+
+        scale_x = NATIVE_WIDTH / virtual_w
+        scale_y = NATIVE_HEIGHT / virtual_h
+
+        if screen.rotation == 0 then
+            translate_0_x, translate_0_y = 0, 0
+        elseif screen.rotation == 90 then
+            translate_0_x, translate_0_y = WIDTH, 0
+            virtual_w, virtual_h = virtual_h, virtual_w
+        elseif screen.rotation == 180 then
+            translate_0_x, translate_0_y = WIDTH, HEIGHT
+        elseif screen.rotation == 270 then
+            translate_0_x, translate_0_y = 0, HEIGHT
+            virtual_w, virtual_h = virtual_h, virtual_w
+        end
+
+        WIDTH = virtual_w
+        HEIGHT = virtual_h
+
+        virtual2pixel = matrix.trans(translate_0_x, translate_0_y)
+                      * matrix.scale(scale_x, scale_y)
+                      * matrix.rotate_deg(screen.rotation)
+        pixel2virtual = -virtual2pixel
     end
 
-    local function screen_coordinates(obj)
+    local function project(x1, y1, x2, y2)
+        x1, y1 = virtual2pixel(x1, y1)
+        x2, y2 = virtual2pixel(x2, y2)
+        return math.floor(math.min(x1, x2)), math.floor(math.min(y1, y2)),
+               math.floor(math.max(x1, x2)), math.floor(math.max(y1, y2))
+    end
+
+    local function unproject(x, y)
+        x, y = pixel2virtual(x, y)
+        return math.floor(x), math.floor(y)
+    end
+
+    local function video(vid, x1, y1, x2, y2, layer, alpha)
+        layer = layer or 1
+        x1, y1, x2, y2 = project(x1, y1, x2, y2)
+        return vid:alpha(alpha):place(
+            x1, y1, x2, y2, screen.rotation
+        ):layer(layer)
+    end
+
+    local function setup()
+        gl.translate(translate_0_x, translate_0_y)
+        gl.scale(scale_x, scale_y)
+        gl.rotate(screen.rotation, 0, 0, 1)
+    end
+
+    return {
+        update = update;
+        unproject = unproject;
+        setup = setup;
+        video = video;
+    }
+end
+
+local function ContentArea(screen)
+    local content_w, content_h
+    local content_area
+    local content2virtual
+
+    local function update(new_content_area, new_content_w, new_content_h)
+        screen.update{
+            rotation = new_content_area.rotation,
+        }
+
+        content_area = new_content_area
+        content_w, content_h = new_content_w, new_content_h
+
+        content2virtual = matrix.scale(WIDTH / content_w,
+                                       HEIGHT / content_h)
+                        *  matrix.scale(content_w / content_area.width,
+                                        content_h / content_area.height)
+                        *  matrix.trans(-content_area.x, -content_area.y)
+    end
+
+    local function virtual_coordinates(obj)
         local x1, y1 = 0, 0
         local x2, y2 = content_w, content_h
         if adjust then
             local _, w, h = obj:state()
             x1, y1, x2, y2 = util.scale_into(content_w, content_h, w, h)
         end
-        local s_x1, s_y1 = virtual2pixel(x1, y1)
-        local s_x2, s_y2 = virtual2pixel(x2, y2)
-        return s_x1, s_y1, s_x2, s_y2
+        x1, y1 = content2virtual(x1, y1)
+        x2, y2 = content2virtual(x2, y2)
+        return x1, y1, x2, y2
     end
 
     local function draw_image(obj, a)
-        local x1, y1, x2, y2 = screen_coordinates(obj)
-        obj:draw(x1, y1, x2, y2, a)
+        local x1, y1, x2, y2 = virtual_coordinates(obj)
+        gl.pushMatrix()
+            screen.setup()
+            obj:draw(x1, y1, x2, y2, a)
+        gl.popMatrix()
     end
 
     local function draw_video(obj, a)
-        local x1, y1, x2, y2 = screen_coordinates(obj)
-        obj:place(x1, y1, x2, y2, 0):layer(1):alpha(a)
+        local x1, y1, x2, y2 = virtual_coordinates(obj)
+        screen.video(obj, x1, y1, x2, y2, 1, a)
     end
 
     return {
@@ -87,7 +159,7 @@ local function Screen()
     }
 end
 
-local screen = Screen()
+local content_area = ContentArea(VirtualScreen())
 
 local function get_effect_vars(starts, ends, now)
     local alpha
@@ -113,7 +185,7 @@ local Image = {
         local alpha = get_effect_vars(
             self.t_start, self.t_end, now
         )
-        screen.draw_image(self.obj, alpha)
+        content_area.draw_image(self.obj, alpha)
     end;
     stop = function(self)
         if self.obj then
@@ -125,45 +197,47 @@ local Image = {
 
 local Video = {
     slot_time = function(self)
-        return VIDEO_PRELOAD_TIME + max(0.5, self.duration)
+        return preload_time + max(0.5, self.duration)
     end;
     prepare = function(self)
-    end;
-    tick = function(self, now)
-        if not self.obj then
+        if preload_time == 0 then
+            print "preloading video"
             self.obj = resource.load_video{
                 file = self.file:copy();
                 raw = true,
                 paused = true;
-            }:alpha(0)
+            }:alpha(0):layer(-1)
+        end
+    end;
+    tick = function(self, now)
+        if not self.obj then
+            print "late loading video"
+            self.obj = resource.load_video{
+                file = self.file:copy();
+                raw = true,
+                paused = true;
+            }:alpha(0):layer(-1)
         end
 
-        if now < self.t_start + VIDEO_PRELOAD_TIME then
+        if now < self.t_start + preload_time then
             return
         end
 
         self.obj:start()
+
         local state, w, h = self.obj:state()
-
         if state ~= "loaded" and state ~= "finished" then
-            print[[
-
-.--------------------------------------------.
-  WARNING:
-  lost video frame. video is most likely out
-  of sync. increase VIDEO_PRELOAD_TIME (on all
-  devices)
-'--------------------------------------------'
-]]
+            print "lost video frame"
         else
             local alpha = get_effect_vars(
-                self.t_start + VIDEO_PRELOAD_TIME, self.t_end, now
+                self.t_start + preload_time, self.t_end, now
             )
-            screen.draw_video(self.obj, alpha)
+            content_area.draw_video(self.obj, alpha)
         end
     end;
     stop = function(self)
         if self.obj then
+            self.obj:layer(-1)
             self.obj:dispose()
             self.obj = nil
         end
@@ -196,29 +270,30 @@ local function Playlist()
             msg("[%s] screen not configured for this setup", serial)
             return
         end
-        
+
         if #items == 0 then
             msg("[%s] no playlist configured", serial)
             return
         end
 
-        for idx = 1, #items do
+        for idx = #items, 1, -1 do
             local item = items[idx]
 
             if item.state == "new" then
+                print(now, "state: waiting", item.file)
                 calc_start(idx, now)
                 item.state = "waiting"
             end
 
-            if item.t_prepare <= now and item.state == "waiting" then
-                print(now, "preparing ", item.file)
+            if now >= item.t_prepare and item.state == "waiting" then
+                print(now, "state: preparing ", item.file)
                 item:prepare()
                 item.state = "prepared"
-            elseif item.t_start <= now and item.state == "prepared" then
-                print(now, "running ", item.file)
+            elseif now >= item.t_start and item.state == "prepared" then
+                print(now, "state: running ", item.file)
                 item.state = "running"
-            elseif item.t_end <= now and item.state == "running" then
-                print(now, "resetting ", item.file)
+            elseif now >= item.t_end and item.state == "running" then
+                print(now, "state: resetting ", item.file)
                 item:stop()
                 calc_start(idx, now)
                 item.state = "waiting"
@@ -294,12 +369,11 @@ util.file_watch("screens/config.json", function(raw)
     adjust = config.adjust
     delta_t = 0
     assigned = false
-    effect = config.effect
 
     for idx = 1, #config.screens do
         local screen_config = config.screens[idx]
         if screen_config.serial == serial then
-            screen.update(screen_config, config.width, config.height)
+            content_area.update(screen_config, config.width, config.height)
             delta_t = screen_config.delta_t
             assigned = true
             return
@@ -318,6 +392,10 @@ util.file_watch("config.json", function(raw)
             duration = item.duration,
         }
     end
+
+    effect = config.effect
+    preload_time = config.video_mode == "seamless" and 0 or 0.5
+
     playlist.set(prepare_playlist(items))
     node.gc()
 end)
