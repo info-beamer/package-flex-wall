@@ -122,9 +122,9 @@ local function ContentArea(screen)
 
         content2virtual = matrix.scale(WIDTH / content_w,
                                        HEIGHT / content_h)
-                        *  matrix.scale(content_w / content_area.width,
-                                        content_h / content_area.height)
-                        *  matrix.trans(-content_area.x, -content_area.y)
+                        * matrix.scale(content_w / content_area.width,
+                                       content_h / content_area.height)
+                        * matrix.trans(-content_area.x, -content_area.y)
     end
 
     local function virtual_coordinates(obj)
