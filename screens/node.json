@@ -88,14 +88,14 @@
             "hint": "Horizontal size of this screen.",
             "ui_width": 3,
             "name": "width",
-            "type": "integer",
+            "type": "float",
             "default": 1920
         }, {
             "title": "Height",
             "hint": "Vertical size of this screen.",
             "ui_width": 3,
             "name": "height",
-            "type": "integer",
+            "type": "float",
             "default": 1080
         }]
     }],
