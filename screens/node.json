@@ -13,15 +13,15 @@
         "title": "Virtual Content Area",
         "type": "section"
     }, {
-        "title": "Content Area Width (pixel)",
-        "hint": "Height of your content. If it doesn't fix, it's resized to this width.",
+        "title": "Content Area Width",
+        "hint": "Height of your content presentation area. You might use cm/inches here.",
         "ui_width": 4,
         "name": "width",
         "type": "float",
         "default": 1920
     }, {
-        "title": "Content Area Height (pixel)",
-        "hint": "Height of your content. If it doesn't fix, it's resized to this height.",
+        "title": "Content Area Height",
+        "hint": "Height of your content presentation area. You might use cm/inches here.",
         "ui_width": 4,
         "name": "height",
         "type": "float",
@@ -50,6 +50,7 @@
             "type": "device"
         }, {
             "title": "Rotation",
+            "hint": "Physical screen rotation.",
             "ui_width": 3,
             "name": "rotation",
             "type": "select",
@@ -70,24 +71,28 @@
 
         {
             "title": "X",
+            "hint": "Horizontal offset of the top-left corner inside the content area.",
             "ui_width": 3,
             "name": "x",
             "type": "float",
             "default": 0
         }, {
             "title": "Y",
+            "hint": "Vertical offset of the top-left corner inside the content area.",
             "ui_width": 3,
             "name": "y",
             "type": "float",
             "default": 0
         }, {
             "title": "Width",
+            "hint": "Horizontal size of this screen.",
             "ui_width": 3,
             "name": "width",
             "type": "integer",
             "default": 1920
         }, {
             "title": "Height",
+            "hint": "Vertical size of this screen.",
             "ui_width": 3,
             "name": "height",
             "type": "integer",
