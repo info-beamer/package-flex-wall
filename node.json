@@ -14,6 +14,7 @@
             "name": "file",
             "type": "resource",
             "valid": ["image", "video"],
+            "features": ["hevc"],
             "default": "empty.png"
         }, {
             "title": "Play time",
@@ -44,8 +45,9 @@
         "ui_width": 4,
         "name": "video_mode",
         "type": "select",
+        "hint": "Seamless will preload the next video while the current video is playing. This allows seamless transitions between videos. This setting is ignored for HEVC videos as they are always loaded in their playlist slot.",
         "options": [
-            ["preload", "Preload videos"],
+            ["preload", "Slot load videos"],
             ["seamless", "Seamless videos"]
         ],
         "default": "preload"

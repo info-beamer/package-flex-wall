@@ -8,6 +8,17 @@ node.make_nested()
 -- they are displayed.
 local PREPARE_TIME = 1 -- seconds
 
+-- There is only one HEVC decoder slot. So videos
+-- cannot be preloaded. Instead we reserve the
+-- following number of seconds at each play slot
+-- for loading the video.
+local HEVC_LOAD_TIME = 0.5 -- seconds
+
+-- Each playslot must be at least this long.
+-- Otherwise prepare time completely skips the
+-- previous slot.
+local MIN_DURATION = 1.2 -- seconds
+
 local json = require "json"
 local matrix = require "matrix2d"
 local font = resource.load_font "silkscreen.ttf"
@@ -175,7 +186,7 @@ end
 
 local Image = {
     slot_time = function(self)
-        return max(0.5, self.duration)
+        return max(MIN_DURATION, self.duration)
     end;
     prepare = function(self)
         self.obj = resource.load_image(self.file:copy())
@@ -197,15 +208,16 @@ local Image = {
 
 local Video = {
     slot_time = function(self)
-        return preload_time + max(0.5, self.duration)
+        self.preload_time = self.is_hevc and HEVC_LOAD_TIME or preload_time
+        return self.preload_time + max(MIN_DURATION, self.duration)
     end;
     prepare = function(self)
-        if preload_time == 0 then
+        if self.preload_time == 0 then
             print "preloading video"
             self.obj = resource.load_video{
-                file = self.file:copy();
+                file = self.file:copy(),
                 raw = true,
-                paused = true;
+                paused = true,
             }:alpha(0):layer(-1)
         end
     end;
@@ -213,13 +225,13 @@ local Video = {
         if not self.obj then
             print "late loading video"
             self.obj = resource.load_video{
-                file = self.file:copy();
+                file = self.file:copy(),
                 raw = true,
-                paused = true;
+                paused = true,
             }:alpha(0):layer(-1)
         end
 
-        if now < self.t_start + preload_time then
+        if now < self.t_start + self.preload_time then
             return
         end
 
@@ -230,7 +242,7 @@ local Video = {
             print "lost video frame"
         else
             local alpha = get_effect_vars(
-                self.t_start + preload_time, self.t_end, now
+                self.t_start + self.preload_time, self.t_end, now
             )
             content_area.draw_video(self.obj, alpha)
         end
@@ -359,6 +371,7 @@ local function prepare_playlist(playlist)
             file = item.file,
             type = item.type,
             duration = item.duration,
+            is_hevc = item.is_hevc,
         }
     end
     return playlist
@@ -386,10 +399,12 @@ util.file_watch("config.json", function(raw)
     local items = {}
     for idx = 1, #config.playlist do
         local item = config.playlist[idx]
+        local is_hevc = item.file.metadata and item.file.metadata.format == "hevc"
         items[#items+1] = {
             file = resource.open_file(item.file.asset_name),
             type = item.file.type,
             duration = item.duration,
+            is_hevc = is_hevc,
         }
     end
 

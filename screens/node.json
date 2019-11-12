@@ -27,9 +27,10 @@
         "type": "float",
         "default": 1080
     }, {
-        "title": "Aspect adjust content",
-        "hint": "Usually your playlist content is resized into the content area size, ignoring aspect ratio. Enable to use aspect ratio preserving scaling",
+        "title": "Enforce aspect ratio",
+        "hint": "Usually your playlist content is resized into the content area size, ignoring aspect ratio. Enable this option to scale your content into the specified area while preserving its aspect ratio.",
         "ui_width": 4,
+        "info": "Use content aspect ratio",
         "name": "adjust",
         "type": "boolean",
         "default": false

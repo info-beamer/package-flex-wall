@@ -3,6 +3,6 @@
     "author": "Florian Wesch <fw@info-beamer.com>",
     "desc": "Plays videos and images on precisely arranged screens",
     "repository": "https://github.com/info-beamer/package-flex-wall",
-    "version": "2019-08-22",
+    "version": "2019-11-12",
     "platforms": ["pi/epoch-1", "pi-4"]
 }

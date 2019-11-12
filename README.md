@@ -117,6 +117,10 @@ once. If you need help, feel free to [contact support](https://info-beamer.com/c
 Release history
 ---------------
 
+### Version 2019-11-12
+
+Added HEVC video support.
+
 ### Version 2019-08-22
 
 Added support for the Pi4.
