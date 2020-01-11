@@ -4,5 +4,9 @@
     "desc": "Plays videos and images on precisely arranged screens",
     "repository": "https://github.com/info-beamer/package-flex-wall",
     "version": "2019-11-12",
-    "platforms": ["pi/epoch-1", "pi-4"]
+    "platforms": ["pi/epoch-1", "pi-4"],
+    "nesting": {
+        "parents": ["top-level"],
+        "childs": []
+    }
 }
