@@ -30,6 +30,7 @@ local delta_t = 0
 local adjust = false
 local effect = "none"
 local preload_time = 0.5
+local audio = false
 
 local function msg(str, ...)
     font:write(10, 10, str:format(...), 24, 1,1,1,.5)
@@ -218,6 +219,7 @@ local Video = {
                 file = self.file:copy(),
                 raw = true,
                 paused = true,
+                audio = audio,
             }:alpha(0):layer(-1)
         end
     end;
@@ -228,6 +230,7 @@ local Video = {
                 file = self.file:copy(),
                 raw = true,
                 paused = true,
+                audio = audio,
             }:alpha(0):layer(-1)
         end
 
@@ -410,6 +413,7 @@ util.file_watch("config.json", function(raw)
 
     effect = config.effect
     preload_time = config.video_mode == "seamless" and 0 or 0.5
+    audio = config.audio
 
     playlist.set(prepare_playlist(items))
     node.gc()

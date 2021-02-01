@@ -51,5 +51,13 @@
             ["seamless", "Seamless videos"]
         ],
         "default": "preload"
+    }, {
+        "title": "Audio support",
+        "ui_width": 4,
+        "name": "audio",
+        "type": "boolean",
+        "info": "Play audio for all videos",
+        "doc_link": true,
+        "default": false
     }]
 }
