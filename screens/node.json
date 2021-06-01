@@ -34,6 +34,20 @@
         "name": "adjust",
         "type": "boolean",
         "default": false
+    }, {
+        "title": "Status Text",
+        "hint": "Display of debug information",
+        "ui_width": 3,
+        "name": "status_text",
+        "type": "select",
+        "options": [
+            ["top_left", "Top Left (default)"],
+            ["top_right", "Top Right"],
+            ["bottom_left", "Bottom Left"],
+            ["bottom_right", "Bottom Right"],
+            ["off", "Disabled"]
+        ],
+        "default": "top_left"
     },
 
     {

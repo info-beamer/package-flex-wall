@@ -31,10 +31,23 @@ local adjust = false
 local effect = "none"
 local preload_time = 0.5
 local audio = false
+local status_text = "top_left"
 
 local function msg(str, ...)
-    font:write(10, 10, str:format(...), 24, 1,1,1,.5)
-    print(str:format(...))
+    local text = str:format(...)
+    print(text)
+    if status_text == "off" then
+        return
+    end
+    local size = 24
+    local width = font:width(text, size)
+    local x, y = unpack(({
+        top_left = {10, 10},
+        top_right = {NATIVE_WIDTH - 10 - width, 10},
+        bottom_left = {10, NATIVE_HEIGHT - 10 - size},
+        bottom_right = {NATIVE_WIDTH - 10 - width, NATIVE_HEIGHT - 10 - size},
+    })[status_text])
+    font:write(x, y, text, size, 1,1,1,.5)
 end
 
 local function get_walltime()
@@ -385,6 +398,7 @@ end
 util.file_watch("screens/config.json", function(raw)
     local config = json.decode(raw)
     adjust = config.adjust
+    status_text = config.status_text
     delta_t = 0
     assigned = false
 
