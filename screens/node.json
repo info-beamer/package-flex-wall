@@ -11,26 +11,27 @@
     ],
     "options": [{
         "title": "Virtual Content Area",
-        "type": "section"
+        "type": "section",
+        "intro": "This virtual content area is a canvas for your content. You can use pixel, cm or inches here. You can then crop out parts of that area for each of your screens below."
     }, {
         "title": "Content Area Width",
-        "hint": "Height of your content presentation area. You might use cm/inches here.",
-        "ui_width": 4,
+        "hint": "Height of your content presentation area. You might use pixels/cm/inches here.",
+        "ui_width": 3,
         "name": "width",
         "type": "float",
         "default": 1920
     }, {
         "title": "Content Area Height",
-        "hint": "Height of your content presentation area. You might use cm/inches here.",
-        "ui_width": 4,
+        "hint": "Height of your content presentation area. You might use pixels/cm/inches here.",
+        "ui_width": 3,
         "name": "height",
         "type": "float",
         "default": 1080
     }, {
-        "title": "Enforce aspect ratio",
+        "title": "Content sizing",
         "hint": "Usually your playlist content is resized into the content area size, ignoring aspect ratio. Enable this option to scale your content into the specified area while preserving its aspect ratio.",
-        "ui_width": 4,
-        "info": "Use content aspect ratio",
+        "ui_width": 3,
+        "info": "Preserve aspect ratio",
         "name": "adjust",
         "type": "boolean",
         "default": false
@@ -52,7 +53,8 @@
 
     {
         "title": "Screen Configuration",
-        "type": "section"
+        "type": "section",
+        "intro": "Each screen can be placed inside the virtual content area defined above. The X/Y/Width/Height values define the area each screen crops from the total content area."
     }, {
         "title": "Screens",
         "name": "screens",
@@ -86,14 +88,14 @@
 
         {
             "title": "X",
-            "hint": "Horizontal offset of the top-left corner inside the content area.",
+            "hint": "Horizontal offset of the top-left screen corner inside the content area.",
             "ui_width": 3,
             "name": "x",
             "type": "float",
             "default": 0
         }, {
             "title": "Y",
-            "hint": "Vertical offset of the top-left corner inside the content area.",
+            "hint": "Vertical offset of the top-left screen corner inside the content area.",
             "ui_width": 3,
             "name": "y",
             "type": "float",
