@@ -197,7 +197,9 @@ local Image = {
         local alpha = get_effect_vars(
             self.t_start, self.t_end, now
         )
-        content_area.draw_image(self.obj, alpha)
+        if state == "loaded" then
+            content_area.draw_image(self.obj, alpha)
+        end
     end;
     stop = function(self)
         if self.obj then
