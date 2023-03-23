@@ -1,29 +1,22 @@
 #!/usr/bin/python2.7
+import sys; sys.path.insert(0, '.pylib')
 import time
-import pytz
-from datetime import datetime, timedelta
-from hosted import CONFIG, NODE
+from datetime import datetime
+from hosted import config, node, log
+from hosted.scheduler import verified_timezone, utc_to_local
 
-CONFIG.restart_on_update()
+config.restart_on_update()
 
-tz = pytz.timezone(CONFIG['timezone'])
-
-def parse_time(val):
-    hour, minute = [int(v) for v in val.split(':')]
-    return timedelta(hours=hour, minutes=minute)
-
-day_start = parse_time(CONFIG['day_start'])
-night_start = parse_time(CONFIG['night_start'])
+tz = verified_timezone(
+    config.metadata['timezone'] if config.timezone == "device" else config.timezone
+)
 
 while time.time() < 100000:
     time.sleep(1)
 
 while 1:
-    now = pytz.utc.localize(datetime.utcnow(), is_dst=None).astimezone(tz)
-
-    now = now - now.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    is_day = now >= day_start and now < night_start
-    NODE["/is_day"]("true" if is_day else "false")
-
+    now = utc_to_local(datetime.utcnow(), tz).replace(microsecond=0)
+    is_day = config.schedule.active(tz, now)
+    log('now is %s: day: %s' % (now, is_day), name='scheduler')
+    node["/is_day"]("true" if is_day else "false")
     time.sleep(5)

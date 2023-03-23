@@ -3,5 +3,10 @@
     "author": "Florian Wesch <fw@info-beamer.com>",
     "desc": "Plays videos and images on precisely arranged screens. Supports day/night playlists.",
     "repository": "https://github.com/info-beamer/package-flex-wall/tree/day-night",
-    "version": "beta2"
+    "version": "beta2",
+    "platforms": ["pi/epoch-1", "pi/epoch-2"],
+    "nesting": {
+        "parents": ["top-level"],
+        "childs": []
+    }
 }
