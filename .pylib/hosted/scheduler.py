@@ -563,12 +563,16 @@ def timespec_from_config(value):
         return TimeSpec.from_trusted_spec(value)
 
 class AlwaysSpec(object):
+    def is_active_at(self, tz, dt_naive_local):
+        return True
     def spans_between(self, tz, dt_naive_local_min, dt_naive_local_max):
         return [(dt_naive_local_min, dt_naive_local_max)]
     def serialize(self):
         return 'always'
 
 class NeverSpec(object):
+    def is_active_at(self, tz, dt_naive_local):
+        return False
     def spans_between(self, tz, dt_naive_local_min, dt_naive_local_max):
         return []
     def serialize(self):
@@ -580,16 +584,23 @@ class TimeSpec(object):
         if not isinstance(spec, dict):
             raise TimeSpecError("Top-level dict expected")
 
+        earliest, latest = None, None
+
         if not 'start' in spec:
             raise TimeSpecError("Start missing")
         start = spec['start']
         if not isinstance(start, string_types):
             raise TimeSpecError("Invalid start: Not a string value")
         try:
-            start = datetime.datetime.strptime(start, "%Y-%m-%d")
+            if ' ' in start:
+                start = datetime.datetime.strptime(start, "%Y-%m-%d %H:%M")
+                earliest = start
+                start = start.replace(hour=0, minute=0)
+            else:
+                start = datetime.datetime.strptime(start, "%Y-%m-%d")
+                earliest = start
         except Exception as err:
-            raise TimeSpecError("Invalid start: YYYY-MM-DD expected")
-        dt_start = start
+            raise TimeSpecError("Invalid start: YYYY-MM-DD [HH:MM] expected")
 
         repeat = spec.get('repeat', dict(freq='daily', count=1))
         if not isinstance(repeat, dict):
@@ -599,10 +610,11 @@ class TimeSpec(object):
             raise TimeSpecError("Freq missing")
         freq = repeat['freq']
 
+        # Move start to begin of span cycle
         if freq == 'weekly' and start.weekday() != 0:
-            raise TimeSpecError("Weekly schedule must start on a Monday")
+            start -= datetime.timedelta(days=start.weekday()) # find monday
         elif freq == 'monthly' and start.day != 1:
-            raise TimeSpecError("Monthly schedule must start on the first of the month")
+            start = start.replace(day=1)
 
         rr_freq_map = dict(
             daily = (rrule.DAILY, DAY_MINUTES),
@@ -651,10 +663,21 @@ class TimeSpec(object):
             if not isinstance(until, string_types):
                 raise TimeSpecError("Invalid until")
             try:
-                 until = datetime.datetime.strptime(until, "%Y-%m-%d")
+                if ' ' in until:
+                    until = datetime.datetime.strptime(until, "%Y-%m-%d %H:%M")
+                    if (until.hour, until.minute) == (0, 0):
+                        # Convert to inclusive date based end
+                        until -= datetime.timedelta(days=1)
+                    else:
+                        latest = until
+                        until = until.replace(hour=0, minute=0)
+                else:
+                    until = datetime.datetime.strptime(until, "%Y-%m-%d")
             except Exception as err:
-                raise TimeSpecError("Invalid 'until' format: YYYY-MM-DD expected")
-            if until < dt_start:
+                raise TimeSpecError("Invalid 'until' format: YYYY-MM-DD [HH:MM] expected")
+            if until < start:
+                raise TimeSpecError("Invalid 'until': before start")
+            if earliest and latest and latest <= earliest:
                 raise TimeSpecError("Invalid 'until': before start")
         else:
             until = None
@@ -762,29 +785,48 @@ class TimeSpec(object):
             return v
         by_setpos = parse_list('by_setpos', validate_by_setpos)
 
+        assert(earliest or latest)
+        clip = (earliest, latest)
+
         return cls(
-            spans, freq, dt_start, count, until, interval,
+            spans, freq, start, count, until, interval, clip,
             by_month, by_weekday, by_monthday, by_yearday, by_weekno, by_setpos,
         )
 
     @classmethod
     def from_trusted_spec(cls, spec):
         assert isinstance(spec, dict)
+        earliest, latest = None, None
         spans = spec['spans']
         repeat = spec['repeat']
-        dt_start = datetime.datetime.strptime(
-            spec['start'], "%Y-%m-%d"
-        )
+        start = spec['start']
+        if ' ' in start:
+            start = datetime.datetime.strptime(start, "%Y-%m-%d %H:%M")
+            earliest = start
+            start = start.replace(hour=0, minute=0)
+        else:
+            start = datetime.datetime.strptime(start, "%Y-%m-%d")
+            earliest = start
         freq = dict(
             daily = rrule.DAILY,
             weekly = rrule.WEEKLY,
             monthly = rrule.MONTHLY,
         )[repeat['freq']]
+        if freq == rrule.WEEKLY and start.weekday() != 0:
+            start -= datetime.timedelta(days=start.weekday()) # find monday
+        elif freq == rrule.MONTHLY and start.day != 1:
+            start = start.replace(day=1)
         interval = repeat.get('interval', 1)
         count = repeat.get('count')
-        until = datetime.datetime.strptime(
-            repeat['until'], "%Y-%m-%d"
-        ) if 'until' in repeat else None
+        until = repeat.get('until')
+        if until is not None:
+            if ' ' in until:
+                until = datetime.datetime.strptime(until, "%Y-%m-%d %H:%M")
+                latest = until
+                assert((until.hour, until.minute) != (0, 0))
+                until = until.replace(hour=0, minute=0)
+            else:
+                until = datetime.datetime.strptime(until, "%Y-%m-%d")
         by_month = repeat.get('by_month')
         by_weekday = [
             (
@@ -797,21 +839,24 @@ class TimeSpec(object):
         by_yearday = repeat.get('by_yearday')
         by_weekno = repeat.get('by_weekno')
         by_setpos = repeat.get('by_setpos')
+        assert(earliest or latest)
+        clip = (earliest, latest)
         return cls(
-            spans, freq, dt_start, count, until, interval,
+            spans, freq, start, count, until, interval, clip,
             by_month, by_weekday, by_monthday, by_yearday, by_weekno, by_setpos,
         )
 
     def __init__(self,
-        spans, freq, dt_start, count, until, interval,
+        spans, freq, start, count, until, interval, clip,
         by_month, by_weekday, by_monthday, by_yearday, by_weekno, by_setpos,
     ):
         self._spans = spans
         self._freq = freq
-        self._dt_start = dt_start
+        self._start = start
         self._count = count
         self._until = until
         self._interval = interval
+        self._clip = clip
         self._by_month = by_month
         self._by_weekday = by_weekday
         self._by_monthday = by_monthday
@@ -824,7 +869,7 @@ class TimeSpec(object):
                 freq = self._freq,
                 until = self._until,
                 count = self._count,
-                dtstart = self._dt_start,
+                dtstart = self._start,
                 interval = self._interval,
                 bymonth = self._by_month,
                 byweekday = self._by_weekday,
@@ -832,20 +877,23 @@ class TimeSpec(object):
                 byyearday = self._by_yearday,
                 byweekno = self._by_weekno,
                 bysetpos = self._by_setpos,
-                max_year = self._dt_start.year + 25,
+                max_year = self._start.year + 25,
             )
         except Exception as err:
             traceback.print_exc()
             raise TimeSpecError("Schedule combination cannot be satisfied")
-        first = self._rr.after(datetime.datetime(1, 1, 1))
-        if first != self._dt_start:
-            raise TimeSpecError("Schedule repeat specification doesn't include start date")
+        # first = self._rr.after(datetime.datetime(1, 1, 1))
+        # if first != self._start:
+        #     raise TimeSpecError("Schedule repeat specification doesn't include start date")
 
     def serialize(self):
         def encode_dt(dt):
             if dt is None:
                 return None
-            return dt.strftime("%Y-%m-%d")
+            if dt.hour == 0 and dt.minute == 0:
+                return dt.strftime("%Y-%m-%d")
+            else:
+                return dt.strftime("%Y-%m-%d %H:%M")
         def encode_weekdays(wds):
             if wds is None:
                 return None
@@ -856,9 +904,10 @@ class TimeSpec(object):
                     else [wd.weekday, wd.n]
                 ) for wd in wds
             ]
+        earliest, latest = self._clip
         repeat = dict(
             count = self._count,
-            until = self._until.strftime("%Y-%m-%d") if self._until else None,
+            until = encode_dt(latest or self._until),
             freq = {
                 rrule.DAILY: 'daily',
                 rrule.WEEKLY: 'weekly',
@@ -872,12 +921,11 @@ class TimeSpec(object):
             by_weekno = self._by_weekno,
             by_setpos = self._by_setpos,
         )
-        spec = dict(
-            start = self._dt_start.strftime("%Y-%m-%d"),
+        return _omit_none(dict(
+            start = encode_dt(earliest or self._start),
             repeat = _omit_none(repeat),
             spans = self._spans,
-        )
-        return spec
+        ))
 
     @property
     def min_span_offset(self):
@@ -918,6 +966,7 @@ class TimeSpec(object):
         occurrence, tz,
         dt_naive_local_min, dt_naive_local_max=None, until=None,
     ):
+        earliest, latest = self._clip or (None, None)
         for min_offset, max_offset in self.spans_for(occurrence):
             # print('\nspan: %d:%02d - %d:%02d' % (
             #     min_offset/60, min_offset%60,
@@ -947,8 +996,6 @@ class TimeSpec(object):
 
             dt_local_span_min = schedule_localize(tz, dt_naive_local_span_min).astimezone(tz)
             dt_local_span_max = schedule_localize(tz, dt_naive_local_span_max).astimezone(tz)
-            if dt_local_span_min >= dt_local_span_max:
-                continue
 
             # print('local: ', dt_local_span_min, dt_local_span_max)
             # unix_min = dt_to_unix(dt_local_span_min.astimezone(pytz.UTC))
@@ -957,6 +1004,20 @@ class TimeSpec(object):
 
             dt_naive_local_span_min = dt_local_span_min.replace(tzinfo=None)
             dt_naive_local_span_max = dt_local_span_max.replace(tzinfo=None)
+
+            # Apply clipping
+            if earliest is not None:
+                # print('> earliest clip', dt_naive_local_span_min)
+                dt_naive_local_span_min = max(earliest, dt_naive_local_span_min)
+                # print('< earliest clip', dt_naive_local_span_min)
+            if latest is not None:
+                # print('> latest clip', dt_naive_local_span_max)
+                dt_naive_local_span_max = min(latest, dt_naive_local_span_max)
+                # print('< latest clip', dt_naive_local_span_max)
+
+            if dt_naive_local_span_min >= dt_naive_local_span_max:
+                continue
+            # print(dt_naive_local_span_min, '->', dt_naive_local_span_max)
 
             if until:
                 if dt_naive_local_span_min > until:
@@ -981,9 +1042,14 @@ class TimeSpec(object):
             minutes = self.max_span_offset - 1
         )
 
+        # During the first occurence, it might happen that all
+        # active spans are past the 'earliest' timestamp, resulting
+        # in an initial empty set of spans. So calculate at least two
+        # possible occurences to look into a possible second occurence
+        # as well.
         occurrences = list(self.rr.xafter(
             dt_naive_local_occurrence_min,
-            count = 1, inc = True
+            count = 2, inc = True
         ))
 
         if not occurrences:
@@ -1002,14 +1068,14 @@ class TimeSpec(object):
                     return False
         return True
 
-    def active(self, tz, dt_naive_local):
+    def is_active_at(self, tz, dt_naive_local):
         return bool(self.spans_between(
             tz, dt_naive_local, dt_naive_local + datetime.timedelta(seconds=1)
         ))
 
-    def spans_between(self, tz, dt_naive_local_min, dt_naive_local_max):
+    def iter_spans_between(self, tz, dt_naive_local_min, dt_naive_local_max):
         if dt_naive_local_min >= dt_naive_local_max:
-            return []
+            return
 
         # print('spans between')
         # print(dt_naive_local_min, dt_naive_local_max)
@@ -1032,13 +1098,15 @@ class TimeSpec(object):
             days = 1,
         ) if self._until else None
 
-        spans = []
         for occurrence in occurrences:
-            spans.extend(self.occurrence_to_spans(
+            for span in self.occurrence_to_spans(
                 occurrence, tz,
                 dt_naive_local_min, dt_naive_local_max, until
-            ))
-        return spans
+            ):
+                yield span
+
+    def spans_between(self, tz, dt_naive_local_min, dt_naive_local_max):
+        return list(self.iter_spans_between(tz, dt_naive_local_min, dt_naive_local_max))
 
 
 if __name__ == "__main__":

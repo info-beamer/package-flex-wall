@@ -16,7 +16,7 @@ while time.time() < 100000:
 
 while 1:
     now = utc_to_local(datetime.utcnow(), tz).replace(microsecond=0)
-    is_day = config.schedule.active(tz, now)
+    is_day = config.schedule.is_active_at(tz, now)
     log('now is %s: day: %s' % (now, is_day), name='scheduler')
     node["/is_day"]("true" if is_day else "false")
     time.sleep(5)
